@@ -1,0 +1,791 @@
+{
+  "name": "20-Motor de escalamiento",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "incident_id"
+            },
+            {
+              "name": "titulo"
+            },
+            {
+              "name": "descripcion"
+            },
+            {
+              "name": "impacto"
+            },
+            {
+              "name": "reportado_por"
+            },
+            {
+              "name": "sla_minutos",
+              "type": "number"
+            },
+            {
+              "name": "nivel_escalamiento",
+              "type": "number"
+            },
+            {
+              "name": "estado"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1040,
+        80
+      ],
+      "id": "04989533-7d4e-4e6c-813a-ac253bd5d3e1",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1DP4tv_xAQa1CZ99mF-fL-uLkobw71kkT8HW5pOglPiI",
+          "mode": "list",
+          "cachedResultName": "Incidentes",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1DP4tv_xAQa1CZ99mF-fL-uLkobw71kkT8HW5pOglPiI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1DP4tv_xAQa1CZ99mF-fL-uLkobw71kkT8HW5pOglPiI/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -736,
+        80
+      ],
+      "id": "c5ae71aa-fb29-422f-9775-626edbaec3a6",
+      "name": "Consultar incidente",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "dy1m6ALY3u7IUWnf",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -496,
+        80
+      ],
+      "id": "08fbd3be-9c33-4118-973b-f4efdae54291",
+      "name": "Combinar entrada + incidente"
+    },
+    {
+      "parameters": {
+        "jsCode": "const all=$input.all().map(x=>x.json); const input=all.find(x=>x.incident_id)||{}; const rows=all.filter(x=>x.incident_id); const current=rows[0]||input; const previous=Math.min(3,Number(current.nivel_escalamiento||input.nivel_escalamiento||0)); const next=Math.min(3,previous+1); const impacto=String(input.impacto||current.impacto||'').toUpperCase(); const channels=(impacto==='CRITICO'||impacto==='ALTO')?['EMAIL','TELEGRAM']:['EMAIL']; const reason=next===1?'Primer vencimiento del SLA':`Incidente continúa abierto después del escalamiento nivel ${previous}`; return [{json:{...input,...current,nivel_previo:previous,nivel_nuevo:next,canales:channels.join(', '),motivo:reason,estado_previo:current.estado||input.estado||'ABIERTO',estado_nuevo:'ABIERTO',fecha_escalamiento:new Date().toISOString()}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -256,
+        80
+      ],
+      "id": "66eccf10-d9c9-43e2-a583-1db2aa570ce0",
+      "name": "Calcular siguiente nivel"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1hO3F7yGgUBnuSg6szPjDN-V_SIEXmpFXPyncyEv19d4",
+          "mode": "list",
+          "cachedResultName": "Incidentes_Escalamiento_Historial",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1hO3F7yGgUBnuSg6szPjDN-V_SIEXmpFXPyncyEv19d4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1hO3F7yGgUBnuSg6szPjDN-V_SIEXmpFXPyncyEv19d4/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        0,
+        -48
+      ],
+      "id": "0d26cb17-0486-4a61-8e9a-627744ef0c08",
+      "name": "Registrar escalamiento",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "dy1m6ALY3u7IUWnf",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1DP4tv_xAQa1CZ99mF-fL-uLkobw71kkT8HW5pOglPiI",
+          "mode": "list",
+          "cachedResultName": "Incidentes",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1DP4tv_xAQa1CZ99mF-fL-uLkobw71kkT8HW5pOglPiI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1DP4tv_xAQa1CZ99mF-fL-uLkobw71kkT8HW5pOglPiI/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "nivel_escalamiento": "={{ $json.nivel_nuevo }}",
+            "fecha_ultima_escalacion": "={{ $json.fecha_escalamiento }}",
+            "motivo_ultima_escalacion": "={{ $json.motivo }}",
+            "estado": "ABIERTO",
+            "incident_id": "={{ $json.incident_id }}"
+          },
+          "matchingColumns": [
+            "incident_id"
+          ],
+          "schema": [
+            {
+              "id": "incident_id",
+              "displayName": "incident_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fecha_creacion",
+              "displayName": "fecha_creacion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "titulo",
+              "displayName": "titulo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "descripcion",
+              "displayName": "descripcion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "impacto",
+              "displayName": "impacto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "reportado_por",
+              "displayName": "reportado_por",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sla_minutos",
+              "displayName": "sla_minutos",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "estado",
+              "displayName": "estado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "nivel_escalamiento",
+              "displayName": "nivel_escalamiento",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fecha_ultima_escalacion",
+              "displayName": "fecha_ultima_escalacion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "motivo_ultima_escalacion",
+              "displayName": "motivo_ultima_escalacion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        240,
+        0
+      ],
+      "id": "34deee28-9cd5-4c4f-b58f-37a0558ff341",
+      "name": "Actualizar nivel del incidente",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "dy1m6ALY3u7IUWnf",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "abdelfabiancristancho@gmail.com",
+        "subject": "=🚨 Escalamiento {{ $json.nivel_nuevo }} - {{ $json.impacto }} - {{ $json.incident_id }}",
+        "emailType": "text",
+        "message": "=Incidente: {{ $json.incident_id }}\nImpacto: {{ $json.impacto }}\nNivel: {{ $json.nivel_nuevo }}\nTítulo: {{ $json.titulo }}\nMotivo: {{ $json.motivo }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        480,
+        144
+      ],
+      "id": "841c6ed1-fa99-4ed7-9980-a7c27c8532d5",
+      "name": "Notificar por Email",
+      "webhookId": "518bae36-d55b-479b-b049-2f84df8973a6",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "3mnlw9ClOtwkD4qd",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "76123c0f-194d-42b5-8c76-aaedb148a667",
+              "leftValue": "={{ ['CRITICO','ALTO'].includes($json.impacto) }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        480,
+        352
+      ],
+      "id": "8d9df289-a55e-4edb-b621-e8a924fea435",
+      "name": "¿Usar Telegram?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f513559c-2e21-48e0-a9f7-2ef089389197",
+              "leftValue": "={{ Number($json.nivel_nuevo) === 3 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        944,
+        80
+      ],
+      "id": "de08720b-51dc-4211-aed3-47bbd620fa63",
+      "name": "¿Ya es nivel 3?"
+    },
+    {
+      "parameters": {
+        "amount": "={{ Number($('When Executed by Another Workflow').first().json.sla_minutos) }}",
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1168,
+        208
+      ],
+      "id": "409a36c4-0de7-47de-bc71-60572588837d",
+      "name": "Wait para siguiente vencimiento",
+      "webhookId": "d8f7e603-f448-43ff-a26e-3c17be2507e6"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1DP4tv_xAQa1CZ99mF-fL-uLkobw71kkT8HW5pOglPiI",
+          "mode": "list",
+          "cachedResultName": "Incidentes",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1DP4tv_xAQa1CZ99mF-fL-uLkobw71kkT8HW5pOglPiI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1DP4tv_xAQa1CZ99mF-fL-uLkobw71kkT8HW5pOglPiI/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1392,
+        208
+      ],
+      "id": "1007da65-8b0b-4415-8b50-85bde047cffe",
+      "name": "Consultar estado para reescalamiento",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "dy1m6ALY3u7IUWnf",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const id=$('Calcular siguiente nivel').first().json.incident_id; const base=$('Calcular siguiente nivel').first().json; const rows=$input.all().map(x=>x.json); const r=rows.find(x=>String(x.incident_id||'')===String(id))||{}; const open=String(r.estado||'')!=='CERRADO'; const level=Number(r.nivel_escalamiento||base.nivel_nuevo||0); return [{json:{...base,estado_actual:r.estado||base.estado_nuevo,nivel_actual:level,debe_reescalar:open&&level<3}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        208
+      ],
+      "id": "b4d8f06b-33bb-4212-b51b-8c77c200d7dd",
+      "name": "Preparar reejecución"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c97e1fe0-f9f1-4a06-b7f3-6f72468fb7a1",
+              "leftValue": "={{ $json.debe_reescalar }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1824,
+        208
+      ],
+      "id": "1342e2c8-992e-4259-988f-a6ec7f66df70",
+      "name": "¿Continúa abierto y < 3?"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "={{ $workflow.id }}",
+          "mode": "id",
+          "cachedResultName": "20-Motor de escalamiento"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "incident_id": "={{ $json.incident_id }}",
+            "titulo": "={{ $json.titulo }}",
+            "descripcion": "={{ $json.descripcion }}",
+            "impacto": "={{ $json.impacto }}",
+            "reportado_por": "={{ $json.reportado_por }}",
+            "sla_minutos": "={{ $json.sla_minutos }}",
+            "nivel_escalamiento": "={{ $json.nivel_actual }}",
+            "estado": "={{ $json.estado_actual }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "incident_id",
+              "displayName": "incident_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "titulo",
+              "displayName": "titulo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "descripcion",
+              "displayName": "descripcion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "impacto",
+              "displayName": "impacto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "reportado_por",
+              "displayName": "reportado_por",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "sla_minutos",
+              "displayName": "sla_minutos",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number"
+            },
+            {
+              "id": "nivel_escalamiento",
+              "displayName": "nivel_escalamiento",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number"
+            },
+            {
+              "id": "estado",
+              "displayName": "estado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        2048,
+        208
+      ],
+      "id": "0493f300-0622-411d-9359-84a363f4e884",
+      "name": "Reejecutar motor de escalamiento"
+    },
+    {
+      "parameters": {
+        "chatId": "7728351628",
+        "text": "=🚨 ESCALAMIENTO DE INCIDENTE  Incidente: {{ $json.incident_id }}  Impacto: {{ $json.impacto }}  Nivel de escalamiento: {{ $json.nivel }}  Estado anterior: {{ $json.estado_previo }}  Estado nuevo: {{ $json.estado_nuevo }}  Motivo: {{ $json.motivo }}  Fecha: {{ $json.fecha }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        768,
+        416
+      ],
+      "id": "bfc93da8-5aa5-46ab-b3ae-282027c2795d",
+      "name": "Send a text message",
+      "webhookId": "d9e5b2c1-471a-41ce-ad16-5832e9f6591c",
+      "credentials": {
+        "telegramApi": {
+          "id": "xFKOnDraMUicWyLF",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Consultar incidente",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Combinar entrada + incidente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar incidente": {
+      "main": [
+        [
+          {
+            "node": "Combinar entrada + incidente",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Combinar entrada + incidente": {
+      "main": [
+        [
+          {
+            "node": "Calcular siguiente nivel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calcular siguiente nivel": {
+      "main": [
+        [
+          {
+            "node": "Registrar escalamiento",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Actualizar nivel del incidente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Actualizar nivel del incidente": {
+      "main": [
+        [
+          {
+            "node": "Notificar por Email",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "¿Usar Telegram?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Usar Telegram?": {
+      "main": [
+        [],
+        [
+          {
+            "node": "¿Ya es nivel 3?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notificar por Email": {
+      "main": [
+        [
+          {
+            "node": "¿Ya es nivel 3?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Ya es nivel 3?": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Wait para siguiente vencimiento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait para siguiente vencimiento": {
+      "main": [
+        [
+          {
+            "node": "Consultar estado para reescalamiento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar estado para reescalamiento": {
+      "main": [
+        [
+          {
+            "node": "Preparar reejecución",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar reejecución": {
+      "main": [
+        [
+          {
+            "node": "¿Continúa abierto y < 3?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Continúa abierto y < 3?": {
+      "main": [
+        [
+          {
+            "node": "Reejecutar motor de escalamiento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registrar escalamiento": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "96410463-d538-4021-aa80-48d19dc7628d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "53b3895fb4b8f730c73a38c8a59bd3e31bbfd86eb25c9149349aa45de31cee6e"
+  },
+  "nodeGroups": [],
+  "id": "So25EwmWK4IpaAhl",
+  "tags": []
+}

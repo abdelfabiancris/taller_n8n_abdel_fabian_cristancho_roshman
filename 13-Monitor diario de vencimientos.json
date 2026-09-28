@@ -1,0 +1,497 @@
+{
+  "name": "13-Monitor diario de vencimientos",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        -80
+      ],
+      "id": "e6ad0832-7a72-446c-a544-86fc70a80eca",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1UO3tISJFSRdjPv_JmbtnbvKNZwYNxIABIHkuTCWuehM",
+          "mode": "list",
+          "cachedResultName": "registro de facturas",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1UO3tISJFSRdjPv_JmbtnbvKNZwYNxIABIHkuTCWuehM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1UO3tISJFSRdjPv_JmbtnbvKNZwYNxIABIHkuTCWuehM/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        -80
+      ],
+      "id": "7e9b2769-2500-49c9-bf6c-bbeb50a5412b",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "dy1m6ALY3u7IUWnf",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ec185667-b0bb-400c-a952-90870c355027",
+              "name": "clasificacion",
+              "value": "={{ (() => {   const fecha = String($json[\"fecha vencimiento\"] || \"\").trim();   if (!fecha) return \"SIN ALERTA\";    const [d, m, y] = fecha.split(\"/\");   const venc = new Date(Number(y), Number(m) - 1, Number(d));   const hoy = new Date();   hoy.setHours(0, 0, 0, 0);    const dias = Math.ceil((venc - hoy) / 86400000);    if (dias < 0) return \"VENCIDO\";   if (dias <= 7) return \"PRÓXIMO 7\";   if (dias <= 15) return \"PRÓXIMO 15\";   if (dias <= 30) return \"PRÓXIMO 30\";   return \"SIN ALERTA\"; })() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        672,
+        -80
+      ],
+      "id": "0216adfb-cfa3-4eb6-b6e4-67051a1d549b",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "27f6e5f6-10bb-498b-977d-36d273fca277",
+              "leftValue": "={{ $json.clasificacion }}",
+              "rightValue": "SIN ALERTA",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        816,
+        -80
+      ],
+      "id": "ed62e56e-f38c-4d43-a515-049e7e0bed11",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "alertas",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        -160
+      ],
+      "id": "05310466-54cd-4a9f-b39f-3a8b86594198",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "sendTo": "abdelfabiancristancho@gmail.com",
+        "subject": "🚨 Alertas de vencimientos",
+        "message": "={{ \n'<h2>🚨 Alertas de vencimientos</h2>' +\n'<p>Se encontraron las siguientes alertas:</p>' +\n'<ul>' +\n$json.alertas.map(a =>\n  '<li><strong>' + a.proveedor + '</strong> — Factura: ' +\n  a['numero factura'] + ' — Vencimiento: ' +\n  a['fecha vencimiento'] + ' — <strong>' +\n  a.clasificacion + '</strong></li>'\n).join('') +\n'</ul>'\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1248,
+        -208
+      ],
+      "id": "226ccc4d-7428-42b3-812d-25eb9e9f6c41",
+      "name": "Send a message",
+      "webhookId": "75fe363f-f742-4d44-9bf7-9558ff252494",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "3mnlw9ClOtwkD4qd",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1UO3tISJFSRdjPv_JmbtnbvKNZwYNxIABIHkuTCWuehM",
+          "mode": "list",
+          "cachedResultName": "registro de facturas",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1UO3tISJFSRdjPv_JmbtnbvKNZwYNxIABIHkuTCWuehM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1UO3tISJFSRdjPv_JmbtnbvKNZwYNxIABIHkuTCWuehM/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Última alerta": "={{ $now.toISO() }}",
+            "row_number": "={{ $json.row_number }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "fecha procesamiento",
+              "displayName": "fecha procesamiento",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "proveedor",
+              "displayName": "proveedor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "nit",
+              "displayName": "nit",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "numero factura",
+              "displayName": "numero factura",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "fecha factura",
+              "displayName": "fecha factura",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "fecha vencimiento",
+              "displayName": "fecha vencimiento",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "subtotal",
+              "displayName": "subtotal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "iva",
+              "displayName": "iva",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "total",
+              "displayName": "total",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "moneda",
+              "displayName": "moneda",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "archivo",
+              "displayName": "archivo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "id archivo",
+              "displayName": "id archivo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Última alerta",
+              "displayName": "Última alerta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1696,
+        -96
+      ],
+      "id": "3fe4ec26-2b5a-4d9c-ad3d-e3b0acf73f37",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "dy1m6ALY3u7IUWnf",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "d6cf0a11-9207-4620-82ce-730c27e4f3e3",
+              "leftValue": "={{ $json[\"Última alerta\"] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        448,
+        -80
+      ],
+      "id": "a1eb6357-8881-4bb2-915c-48283d11d3b3",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "alertas",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1296,
+        0
+      ],
+      "id": "4f0f3ee2-4d4a-4021-ad56-caf464c9c6a9",
+      "name": "Split Out"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update row in sheet": {
+      "main": [
+        []
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        []
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "7440c2d0-15d1-42e2-9144-2b6b223d4d63",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "53b3895fb4b8f730c73a38c8a59bd3e31bbfd86eb25c9149349aa45de31cee6e"
+  },
+  "nodeGroups": [],
+  "id": "oJpoCaW0W3Uuhw70",
+  "tags": []
+}

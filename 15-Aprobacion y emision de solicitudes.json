@@ -1,0 +1,760 @@
+{
+  "name": "15-Aprobacion y emision de solicitudes",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "requestId"
+            },
+            {
+              "name": "requester"
+            },
+            {
+              "name": "costCenter"
+            },
+            {
+              "name": "justification"
+            },
+            {
+              "name": "items",
+              "type": "array"
+            },
+            {
+              "name": "total",
+              "type": "number"
+            },
+            {
+              "name": "status"
+            },
+            {
+              "name": "fecha"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "028382f3-1a67-436d-a194-044797931c4e",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "mode": "expression",
+        "numberOutputs": 3,
+        "output": "={{ \n  $json.total <= 100000 ? 0 :\n  $json.total <= 500000 ? 1 :\n  2\n}}"
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        0
+      ],
+      "id": "8f2c111f-9a66-476e-bed7-d34285b21062",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "sendTo": "abdelfabiancristancho@gmail.com",
+        "subject": "=Solicitud de aprobación: {{$json.requestId}}",
+        "message": "=📋 SOLICITUD DE APROBACIÓN\n\nID de solicitud: {{$json.requestId}}\n\nSolicitante: {{$json.requester}}\n\nCentro de costo: {{$json.costCenter}}\n\nJustificación: {{$json.justification}}\n\nTotal: ${{$json.total}}\n\nNivel de aprobación: {{\n  $json.total <= 100000 ? 'Nivel 1' :\n  $json.total <= 500000 ? 'Nivel 2' :\n  'Nivel 3'\n}}\n\nPor favor, revisa la solicitud y selecciona una opción.",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double",
+            "approveLabel": "aprobar",
+            "disapproveLabel": "rechazar"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        -112
+      ],
+      "id": "2671d4a5-f3a4-4b51-9580-c29d96889ddd",
+      "name": "Send message and wait for response",
+      "webhookId": "a6aa174d-7ee3-4c51-bf37-d5882efffd17",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "3mnlw9ClOtwkD4qd",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "1c1c0f41-5215-4edb-b62a-b827178411de",
+              "leftValue": "={{ Boolean($json.data.approved) }}",
+              "rightValue": "is true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        672,
+        -112
+      ],
+      "id": "6a9689b3-747a-43d4-b28e-c1f43fe83a0c",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1zsMlAG3eio_HjncJl5rspZ_yBnSPn7wIIMHTjwQuwBc",
+          "mode": "list",
+          "cachedResultName": "registro de solicitudes",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1zsMlAG3eio_HjncJl5rspZ_yBnSPn7wIIMHTjwQuwBc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1zsMlAG3eio_HjncJl5rspZ_yBnSPn7wIIMHTjwQuwBc/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "requestId": "={{ $('When Executed by Another Workflow').item.json.requestId }}",
+            "status": "APROBADA"
+          },
+          "matchingColumns": [
+            "requestId"
+          ],
+          "schema": [
+            {
+              "id": "requestId",
+              "displayName": "requestId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "requester",
+              "displayName": "requester",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "costcenter",
+              "displayName": "costcenter",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "justification",
+              "displayName": "justification",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "items",
+              "displayName": "items",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "total",
+              "displayName": "total",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "fecha",
+              "displayName": "fecha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        928,
+        -176
+      ],
+      "id": "7f610aee-cebe-4eb0-b7d9-e12a4e53f5f9",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "dy1m6ALY3u7IUWnf",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "folderId": "1expqRf2cbBEg-DY4TNTwM_j070GaorH0",
+        "title": "={{ 'Orden de compra - ' + $('When Executed by Another Workflow').item.json.requestId }}"
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        1152,
+        -176
+      ],
+      "id": "9eae5d76-0ffc-4ac1-8669-907c7fb9478b",
+      "name": "Create a document",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "tlVLTRKgsrZ832UU",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentURL": "={{ $json.id }}",
+        "actionsUi": {
+          "actionFields": [
+            {
+              "action": "insert",
+              "text": "=ORDEN DE COMPRA  ID DE SOLICITUD: {{ $('When Executed by Another Workflow').item.json.requestId }}  FECHA: {{ $('When Executed by Another Workflow').item.json.fecha }}  SOLICITANTE: {{ $('When Executed by Another Workflow').item.json.requester }}  CENTRO DE COSTO: {{ $('When Executed by Another Workflow').item.json.costCenter }}  JUSTIFICACIÓN: {{ $('When Executed by Another Workflow').item.json.justification }}  NIVEL DE APROBACIÓN: NIVEL 1  TOTAL: ${{ $('When Executed by Another Workflow').item.json.total }}  ESTADO: APROBADA  ITEMS: {{ JSON.stringify($('When Executed by Another Workflow').item.json.items, null, 2) }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        1312,
+        -160
+      ],
+      "id": "15454ace-71b6-4e70-abd3-e44292efb71c",
+      "name": "Update a document",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "tlVLTRKgsrZ832UU",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "=abdelfabiancristancho@gmail.com",
+        "subject": "=Solicitud aprobada: {{ $('When Executed by Another Workflow').first().json.requestId }}",
+        "message": "=✅ SOLICITUD APROBADA\n\nID de solicitud: {{ $('When Executed by Another Workflow').first().json.requestId }}\n\nSolicitante: {{ $('When Executed by Another Workflow').first().json.requester }}\n\nCentro de costo: {{ $('When Executed by Another Workflow').first().json.costCenter }}\n\nJustificación:\n{{ $('When Executed by Another Workflow').first().json.justification }}\n\nTotal: ${{ $('When Executed by Another Workflow').first().json.total }}\n\nLa solicitud fue aprobada y se ha generado la orden de compra.\n\nEstado final: EMITIDA",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1760,
+        -160
+      ],
+      "id": "76e81011-9d42-4eaf-9fe1-3c1b5c5b5e21",
+      "name": "Send a message",
+      "webhookId": "e564fb58-120b-482a-80b7-22c7aab99141",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "3mnlw9ClOtwkD4qd",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1zsMlAG3eio_HjncJl5rspZ_yBnSPn7wIIMHTjwQuwBc",
+          "mode": "list",
+          "cachedResultName": "registro de solicitudes",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1zsMlAG3eio_HjncJl5rspZ_yBnSPn7wIIMHTjwQuwBc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1zsMlAG3eio_HjncJl5rspZ_yBnSPn7wIIMHTjwQuwBc/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "requestId": "={{ $('When Executed by Another Workflow').first().json.requestId }}",
+            "status": "EMITIDA"
+          },
+          "matchingColumns": [
+            "requestId"
+          ],
+          "schema": [
+            {
+              "id": "requestId",
+              "displayName": "requestId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "requester",
+              "displayName": "requester",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "costcenter",
+              "displayName": "costcenter",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "justification",
+              "displayName": "justification",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "items",
+              "displayName": "items",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "total",
+              "displayName": "total",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fecha",
+              "displayName": "fecha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1536,
+        -160
+      ],
+      "id": "fc0ac027-1d41-40d2-96ff-5a7db42898ff",
+      "name": "Update row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "dy1m6ALY3u7IUWnf",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1zsMlAG3eio_HjncJl5rspZ_yBnSPn7wIIMHTjwQuwBc",
+          "mode": "list",
+          "cachedResultName": "registro de solicitudes",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1zsMlAG3eio_HjncJl5rspZ_yBnSPn7wIIMHTjwQuwBc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1zsMlAG3eio_HjncJl5rspZ_yBnSPn7wIIMHTjwQuwBc/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "requestId": "={{ $('When Executed by Another Workflow').first().json.requestId }}",
+            "status": "RECHAZADA"
+          },
+          "matchingColumns": [
+            "requestId"
+          ],
+          "schema": [
+            {
+              "id": "requestId",
+              "displayName": "requestId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "requester",
+              "displayName": "requester",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "costcenter",
+              "displayName": "costcenter",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "justification",
+              "displayName": "justification",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "items",
+              "displayName": "items",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "total",
+              "displayName": "total",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fecha",
+              "displayName": "fecha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        896,
+        -16
+      ],
+      "id": "333a1843-fd90-48a3-965d-399d1dda44a9",
+      "name": "Update row in sheet2",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "dy1m6ALY3u7IUWnf",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "abdelfabiancristancho@gmail.com",
+        "subject": "=Solicitud rechazada: {{ $('When Executed by Another Workflow').first().json.requestId }}",
+        "message": "=❌ SOLICITUD RECHAZADA  ID de solicitud: {{ $('When Executed by Another Workflow').first().json.requestId }}  Solicitante: {{ $('When Executed by Another Workflow').first().json.requester }}  Centro de costo: {{ $('When Executed by Another Workflow').first().json.costCenter }}  Justificación: {{ $('When Executed by Another Workflow').first().json.justification }}  Total: ${{ $('When Executed by Another Workflow').first().json.total }}  La solicitud ha sido rechazada y no se generará una orden de compra.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1056,
+        0
+      ],
+      "id": "f2e85895-8275-4c3c-9f98-bb7a92495be6",
+      "name": "Send a message1",
+      "webhookId": "95e7f8fb-b66d-4cdb-9f58-361f20ef20cd",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "3mnlw9ClOtwkD4qd",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Send message and wait for response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send message and wait for response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send message and wait for response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send message and wait for response": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update row in sheet2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Create a document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a document": {
+      "main": [
+        [
+          {
+            "node": "Update a document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a document": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update row in sheet1": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update row in sheet2": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "aa682ff3-94e7-4c10-b325-dac4779df2aa",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "53b3895fb4b8f730c73a38c8a59bd3e31bbfd86eb25c9149349aa45de31cee6e"
+  },
+  "nodeGroups": [],
+  "id": "LZXLnFBEASupP8cw",
+  "tags": []
+}

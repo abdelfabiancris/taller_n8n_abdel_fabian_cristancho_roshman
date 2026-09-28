@@ -1,0 +1,417 @@
+{
+  "name": "12-Gobernanza de entregables",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "1oFLZj4S1jCrSvGX89CjsVJu4jWcXAaZG",
+          "mode": "list",
+          "cachedResultName": "Entrada",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1oFLZj4S1jCrSvGX89CjsVJu4jWcXAaZG"
+        },
+        "event": "fileCreated",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "ddd6a3c7-cf55-406b-9df6-8874bd3e2482",
+      "name": "Google Drive Trigger",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "CRS7ty7ZXObzj5Tu",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f0b9ad51-4d1b-4ebf-876c-67bdf6c05aa7",
+              "leftValue": "={{ $json.name }}",
+              "rightValue": "^[^_]+_[^_]+_(INFORME|CONTRATO|ACTA|ENTREGABLE)_[0-9]{8}_V[0-9]{2}\\.(pdf|docx)$",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            },
+            {
+              "id": "ff0efd59-ba2c-40aa-bd02-c0ba2914ce30",
+              "leftValue": "={{ $json.mimeType }}",
+              "rightValue": "^(application/pdf|application/vnd\\.openxmlformats-officedocument\\.wordprocessingml\\.document)$",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        224,
+        0
+      ],
+      "id": "06a93d7d-12af-430f-af6d-d72cfce4cb0e",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "move",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1PnqAwq_doa1A5uJ3-lbVAWbPJ7KFaSns",
+          "mode": "list",
+          "cachedResultName": "Aceptados",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1PnqAwq_doa1A5uJ3-lbVAWbPJ7KFaSns"
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        448,
+        -96
+      ],
+      "id": "a12ea1b2-c052-4eab-bc9f-da8e5b7114e5",
+      "name": "Move file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "CRS7ty7ZXObzj5Tu",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1DAOGyKZUG5SiGzOE0dfEiH_Nzr45TcBPa0LWBF6h140",
+          "mode": "list",
+          "cachedResultName": "registro de gobernanza",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1DAOGyKZUG5SiGzOE0dfEiH_Nzr45TcBPa0LWBF6h140/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1DAOGyKZUG5SiGzOE0dfEiH_Nzr45TcBPa0LWBF6h140/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "fecha procesamiento": "={{ $now.toISO() }}",
+            "ID archivo": "={{ $json.id }}",
+            "Nombre archivo": "={{ $json.name }}",
+            "mime": "={{ $json.mimeType }}",
+            "Estado": "ACEPTADO",
+            "Motivo": "Nombre y formato válidos",
+            "Destino": "ACEPTADOS"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "fecha procesamiento",
+              "displayName": "fecha procesamiento",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "ID archivo",
+              "displayName": "ID archivo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Nombre archivo",
+              "displayName": "Nombre archivo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "mime",
+              "displayName": "mime",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Estado",
+              "displayName": "Estado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Motivo",
+              "displayName": "Motivo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Destino",
+              "displayName": "Destino",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        576,
+        -96
+      ],
+      "id": "33d00cae-b85f-4338-8b9a-8a35d969b3c9",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "dy1m6ALY3u7IUWnf",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1DAOGyKZUG5SiGzOE0dfEiH_Nzr45TcBPa0LWBF6h140",
+          "mode": "list",
+          "cachedResultName": "registro de gobernanza",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1DAOGyKZUG5SiGzOE0dfEiH_Nzr45TcBPa0LWBF6h140/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1DAOGyKZUG5SiGzOE0dfEiH_Nzr45TcBPa0LWBF6h140/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "fecha procesamiento": "={{ $now.toISO() }}",
+            "ID archivo": "={{ $json.id }}",
+            "Nombre archivo": "={{ $json.name }}",
+            "mime": "={{ $json.mimeType }}",
+            "Estado": "RECHAZADO",
+            "Motivo": "Nombre o formato no válido",
+            "Destino": "RECHAZADOS"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "fecha procesamiento",
+              "displayName": "fecha procesamiento",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "ID archivo",
+              "displayName": "ID archivo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Nombre archivo",
+              "displayName": "Nombre archivo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "mime",
+              "displayName": "mime",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Estado",
+              "displayName": "Estado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Motivo",
+              "displayName": "Motivo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Destino",
+              "displayName": "Destino",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        464,
+        128
+      ],
+      "id": "d0222016-75b5-46f4-b2d7-4c6c17979626",
+      "name": "Append row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "dy1m6ALY3u7IUWnf",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Drive Trigger": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Move file",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Append row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Move file": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "8f3fdd36-5202-4fa0-993b-3df430543abc",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "53b3895fb4b8f730c73a38c8a59bd3e31bbfd86eb25c9149349aa45de31cee6e"
+  },
+  "nodeGroups": [],
+  "id": "y9FZdPaNjPpOKyHN",
+  "tags": []
+}

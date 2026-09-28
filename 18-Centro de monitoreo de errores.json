@@ -1,0 +1,375 @@
+{
+  "name": "18-Centro de monitoreo de errores",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1536,
+        80
+      ],
+      "id": "c450ea77-b883-4e19-8231-ad05960107a6",
+      "name": "Error Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "const e=$json.execution||{}; const w=$json.workflow||{}; const msg=e.error?.message || $json.trigger?.error?.message || 'Error sin mensaje'; const last=e.lastNodeExecuted || $json.trigger?.error?.node?.name || 'Desconocido'; const wid=w.id||''; const wf=w.name||'Desconocido'; const dedupeKey=[wid||wf,last,msg].join('|'); return [{json:{fecha:new Date().toISOString(),workflow:wf,workflow_id:wid,execution_id:e.id||'',ultimo_nodo:last,mensaje:msg,url_ejecucion:e.url||'',dedupeKey}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1248,
+        80
+      ],
+      "id": "1391ce8c-a634-4dd8-9035-87b1c999757c",
+      "name": "Normalizar error"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1B_7YJwftrOaZSkdRVsRZX6Ak1HeKyR1zZtHCfXX-iiE",
+          "mode": "list",
+          "cachedResultName": "Errores_Centro_Monitoreo",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1B_7YJwftrOaZSkdRVsRZX6Ak1HeKyR1zZtHCfXX-iiE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1B_7YJwftrOaZSkdRVsRZX6Ak1HeKyR1zZtHCfXX-iiE/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -976,
+        288
+      ],
+      "id": "fe8e517c-fac7-417e-bbd5-708fa277d734",
+      "name": "Leer historial de errores",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "dy1m6ALY3u7IUWnf",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -736,
+        80
+      ],
+      "id": "ce2f93da-0563-469b-bbdf-38d66e16a349",
+      "name": "Combinar error + historial"
+    },
+    {
+      "parameters": {
+        "jsCode": "const all=$input.all().map(x=>x.json); const current=all.find(x=>x.dedupeKey) || {}; const now=Date.now(); const dup=all.filter(x=>x!==current && x.dedupeKey===current.dedupeKey).some(x=>{const t=new Date(x.fecha||0).getTime(); return t && (now-t)<15*60*1000;}); return [{json:{...current,duplicado:dup}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -496,
+        80
+      ],
+      "id": "2f441b3e-13d0-4c7a-b306-0b02f254c0f0",
+      "name": "Detectar duplicado reciente"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "fdfcbd86-3da3-4627-a39c-4ae7c3073400",
+              "leftValue": "={{ $json.duplicado }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -256,
+        80
+      ],
+      "id": "95b9d51c-5b41-449f-a300-9d9e17e1fe82",
+      "name": "¿Error duplicado?"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1B_7YJwftrOaZSkdRVsRZX6Ak1HeKyR1zZtHCfXX-iiE",
+          "mode": "list",
+          "cachedResultName": "Errores_Centro_Monitoreo",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1B_7YJwftrOaZSkdRVsRZX6Ak1HeKyR1zZtHCfXX-iiE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1B_7YJwftrOaZSkdRVsRZX6Ak1HeKyR1zZtHCfXX-iiE/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Fecha": "={{ $json.fecha }}",
+            "Workflow": "={{ $json.workflow }}",
+            "Workflow_ID": "={{ $json.workflow_id }}",
+            "Execution_ID": "={{ $json.execution_id }}",
+            "Ultimo_Nodo": "={{ $json.ultimo_nodo }}",
+            "Mensaje": "={{ $json.mensaje }}",
+            "URL_Ejecucion": "={{ $json.url_ejecucion }}",
+            "Dedupe_Key": "={{ $json.dedupeKey }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Fecha",
+              "displayName": "Fecha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Workflow",
+              "displayName": "Workflow",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Workflow_ID",
+              "displayName": "Workflow_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Execution_ID",
+              "displayName": "Execution_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Ultimo_Nodo",
+              "displayName": "Ultimo_Nodo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Mensaje",
+              "displayName": "Mensaje",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "URL_Ejecucion",
+              "displayName": "URL_Ejecucion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Dedupe_Key",
+              "displayName": "Dedupe_Key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        0,
+        0
+      ],
+      "id": "16578e19-18c4-4450-a43d-1be47c5dc496",
+      "name": "Registrar error",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "dy1m6ALY3u7IUWnf",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "abdelfabiancristancho@gmail.com",
+        "subject": "=🚨 Error en workflow: {{ $json.workflow }}",
+        "emailType": "text",
+        "message": "=Se detectó un error en n8n.\n\nWorkflow: {{ $json.workflow }}\nWorkflow ID: {{ $json.workflow_id }}\nExecution ID: {{ $json.execution_id }}\nÚltimo nodo: {{ $json.ultimo_nodo }}\nMensaje: {{ $json.mensaje }}\nURL: {{ $json.url_ejecucion || 'No disponible' }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        240,
+        0
+      ],
+      "id": "8afa4a1e-752c-4b41-9184-e466a439460c",
+      "name": "Alertar error",
+      "webhookId": "0da97ff7-712d-458f-ba78-733f874855b9",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "3mnlw9ClOtwkD4qd",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Normalizar error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar error": {
+      "main": [
+        [
+          {
+            "node": "Leer historial de errores",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Combinar error + historial",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer historial de errores": {
+      "main": [
+        [
+          {
+            "node": "Combinar error + historial",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Combinar error + historial": {
+      "main": [
+        [
+          {
+            "node": "Detectar duplicado reciente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Detectar duplicado reciente": {
+      "main": [
+        [
+          {
+            "node": "¿Error duplicado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Error duplicado?": {
+      "main": [
+        [
+          {
+            "node": "Registrar error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registrar error": {
+      "main": [
+        [
+          {
+            "node": "Alertar error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "84fc7368-1047-4660-821f-7edb5c5fb001",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "53b3895fb4b8f730c73a38c8a59bd3e31bbfd86eb25c9149349aa45de31cee6e"
+  },
+  "nodeGroups": [],
+  "id": "OxfqueO8kyqktywM",
+  "tags": []
+}
